@@ -117,8 +117,9 @@ class BatchLoader(object):
         image_file_name = index + '.jpg'
         im = np.asarray(Image.open(
             osp.join(self.pascal_root, 'JPEGImages', image_file_name)))
-        im = scipy.misc.imresize(im, self.im_shape)  # resize
-
+        
+        #im = scipy.misc.imresize(im, self.im_shape)  # resize
+        im = np.array(Image.fromarray(im).resize(self.im_shape))
         # do a simple horizontal flip as data augmentation
         flip = np.random.choice(2)*2-1
         im = im[:, ::flip, :]
