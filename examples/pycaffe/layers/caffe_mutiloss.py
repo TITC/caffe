@@ -26,7 +26,7 @@ class CaffeMultiLabel(caffe.Layer):
 
     def setup(self, bottom, top):
 
-        self.top_names = ['data', 'label']
+        self.top_names = ['data', 'label1','label2']
 
         # === Read input parameters ===
 
@@ -90,108 +90,56 @@ class BatchLoader(object):
     def __init__(self, params, result):
         self.result = result
         self.batch_size = params['batch_size']
-        self.pascal_root = params['pascal_root']
+        self.data_root = params['data_root']
         self.im_shape = params['im_shape']
         # get list of image indexes.
-        list_file = params['split'] + '.txt'
-        self.indexlist = [line.rstrip('\n') for line in open(
-            osp.join(self.pascal_root, 'ImageSets/Main', list_file))]
+        data_train = params['split'] + '.txt'
+        data_label1 =  params['label1'] + '.txt'
+        data_label2 =  params['label2'] + '.txt'
+
+        self.indexlist_train = [line.rstrip('\n') for line in open(
+            osp.join(self.data_root, '', data_train))]
+
+        self.indexlist_label1 = [line.rstrip('\n') for line in open(
+            osp.join(self.data_root, '', data_label1))]
+
+        self.indexlist_label2 = [line.rstrip('\n') for line in open(
+            osp.join(self.data_root, '', data_label2))]
+
         self._cur = 0  # current image
-        # this class does some simple data-manipulations
-        self.transformer = SimpleTransformer()
 
         print("BatchLoader initialized with {} images".format(
-            len(self.indexlist)))
+            len(self.indexlist_train)))
 
     def load_next_image(self):
         """
         Load the next image in a batch.
         """
         # Did we finish an epoch?
-        if self._cur == len(self.indexlist):
+        if self._cur == len(self.indexlist_train):
             self._cur = 0
-            shuffle(self.indexlist)
+            shuffle(self.indexlist_train)
 
         # Load an image
-        index = self.indexlist[self._cur]  # Get the image index
-        image_file_name = index + '.jpg'
+        index = self.indexlist_train[self._cur]  # Get the image index
+        image_file_name = index + '.png'
         im = np.asarray(Image.open(
-            osp.join(self.pascal_root, 'JPEGImages', image_file_name)))
+            osp.join(self.data_root, 'Raw200', image_file_name)))
         
         #im = scipy.misc.imresize(im, self.im_shape)  # resize
         im = np.array(Image.fromarray(im).resize(self.im_shape))
         # do a simple horizontal flip as data augmentation
-        flip = np.random.choice(2)*2-1
-        im = im[:, ::flip, :]
+        # flip = np.random.choice(2)*2-1#-1/1
+        # im = im[:, ::flip, :]
 
         # Load and prepare ground truth
-        multilabel = np.zeros(20).astype(np.float32)
-        anns = load_pascal_annotation(index, self.pascal_root)
-        for label in anns['gt_classes']:
-            # in the multilabel problem we don't care how MANY instances
-            # there are of each class. Only if they are present.
-            # The "-1" is b/c we are not interested in the background
-            # class.
-            multilabel[label - 1] = 1
+        im_label1 = np.asarray(Image.open(
+            osp.join(self.data_root, 'Soma200Lab', image_file_name)))
+        im_label2 = np.asarray(Image.open(
+            osp.join(self.data_root, 'Vessel200Lab', image_file_name)))
 
         self._cur += 1
-        return self.transformer.preprocess(im), multilabel
-
-
-def load_pascal_annotation(index, pascal_root):
-    """
-    This code is borrowed from Ross Girshick's FAST-RCNN code
-    (https://github.com/rbgirshick/fast-rcnn).
-    It parses the PASCAL .xml metadata files.
-    See publication for further details: (http://arxiv.org/abs/1504.08083).
-
-    Thanks Ross!
-
-    """
-    classes = ('__background__',  # always index 0
-               'aeroplane', 'bicycle', 'bird', 'boat',
-               'bottle', 'bus', 'car', 'cat', 'chair',
-                         'cow', 'diningtable', 'dog', 'horse',
-                         'motorbike', 'person', 'pottedplant',
-                         'sheep', 'sofa', 'train', 'tvmonitor')
-    class_to_ind = dict(zip(classes, range(21)))
-
-    filename = osp.join(pascal_root, 'Annotations', index + '.xml')
-    # print 'Loading: {}'.format(filename)
-
-    def get_data_from_tag(node, tag):
-        return node.getElementsByTagName(tag)[0].childNodes[0].data
-
-    with open(filename) as f:
-        data = minidom.parseString(f.read())
-
-    objs = data.getElementsByTagName('object')
-    num_objs = len(objs)
-
-    boxes = np.zeros((num_objs, 4), dtype=np.uint16)
-    gt_classes = np.zeros((num_objs), dtype=np.int32)
-    overlaps = np.zeros((num_objs, 21), dtype=np.float32)
-
-    # Load object bounding boxes into a data frame.
-    for ix, obj in enumerate(objs):
-        # Make pixel indexes 0-based
-        x1 = float(get_data_from_tag(obj, 'xmin')) - 1
-        y1 = float(get_data_from_tag(obj, 'ymin')) - 1
-        x2 = float(get_data_from_tag(obj, 'xmax')) - 1
-        y2 = float(get_data_from_tag(obj, 'ymax')) - 1
-        cls = class_to_ind[
-            str(get_data_from_tag(obj, "name")).lower().strip()]
-        boxes[ix, :] = [x1, y1, x2, y2]
-        gt_classes[ix] = cls
-        overlaps[ix, cls] = 1.0
-
-    overlaps = scipy.sparse.csr_matrix(overlaps)
-
-    return {'boxes': boxes,
-            'gt_classes': gt_classes,
-            'gt_overlaps': overlaps,
-            'flipped': False,
-            'index': index}
+        return im, im_label1,im_label2
 
 
 def check_params(params):
@@ -201,7 +149,7 @@ def check_params(params):
     assert 'split' in params.keys(
     ), 'Params must include split (train, val, or test).'
 
-    required = ['batch_size', 'pascal_root', 'im_shape']
+    required = ['batch_size', 'data_root', 'im_shape']
     for r in required:
         assert r in params.keys(), 'Params must include {}'.format(r)
 
