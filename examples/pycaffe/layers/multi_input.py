@@ -46,9 +46,12 @@ class CaffeMultiLabel(caffe.Layer):
         # since we use a fixed input image size, we can shape the data layer
         # once. Else, we'd have to do it in the reshape call.
         top[0].reshape(
-            self.batch_size, 3, params['im_shape'][0], params['im_shape'][1])
+            self.batch_size, 1, params['im_shape'][0], params['im_shape'][1])
         # Note the 20 channels (because PASCAL has 20 classes.)
-        top[1].reshape(self.batch_size, 20)
+        top[1].reshape(
+            self.batch_size, 1, params['im_shape'][0], params['im_shape'][1])
+        top[2].reshape(
+            self.batch_size, 1, params['im_shape'][0], params['im_shape'][1])
 
         print_info("PascalMultilabelDataLayerSync", params)
 
@@ -59,7 +62,7 @@ class CaffeMultiLabel(caffe.Layer):
         for itt in range(self.batch_size):
             # Use the batch loader to load the next image.
             im, im_label1,im_label2 = self.batch_loader.load_next_image()
-
+            # print(im_label1.shape)
             # Add directly to the caffe data layer
             top[0].data[itt, ...] = im
             top[1].data[itt, ...] = im_label1
@@ -126,7 +129,7 @@ class BatchLoader(object):
         image_file_name = index + '.png'
         im = np.asarray(Image.open(
             osp.join(self.data_root, 'Raw200', 'Raw200'+image_file_name)))
-        
+        # print(osp.join(self.data_root, 'Raw200', 'Raw200'+image_file_name))
         #im = scipy.misc.imresize(im, self.im_shape)  # resize
         im = np.array(Image.fromarray(im).resize(self.im_shape))
         # do a simple horizontal flip as data augmentation
@@ -136,9 +139,10 @@ class BatchLoader(object):
         # Load and prepare ground truth
         im_label1 = np.asarray(Image.open(
             osp.join(self.data_root, 'Soma200Lab', 'Soma200Lab'+image_file_name)))
+        im_label1 = np.array(Image.fromarray(im_label1).resize(self.im_shape))    
         im_label2 = np.asarray(Image.open(
             osp.join(self.data_root, 'Vessel200Lab','Vessel200Lab'+ image_file_name)))
-
+        im_label2 = np.array(Image.fromarray(im_label2).resize(self.im_shape))   
         self._cur += 1
         return im, im_label1,im_label2
 
