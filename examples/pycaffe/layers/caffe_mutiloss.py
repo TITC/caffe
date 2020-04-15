@@ -58,11 +58,12 @@ class CaffeMultiLabel(caffe.Layer):
         """
         for itt in range(self.batch_size):
             # Use the batch loader to load the next image.
-            im, multilabel = self.batch_loader.load_next_image()
+            im, im_label1,im_label2 = self.batch_loader.load_next_image()
 
             # Add directly to the caffe data layer
             top[0].data[itt, ...] = im
-            top[1].data[itt, ...] = multilabel
+            top[1].data[itt, ...] = im_label1
+            top[2].data[itt, ...] = im_label2
 
     def reshape(self, bottom, top):
         """
@@ -93,7 +94,7 @@ class BatchLoader(object):
         self.data_root = params['data_root']
         self.im_shape = params['im_shape']
         # get list of image indexes.
-        data_train = params['split'] + '.txt'
+        data_train = params['raw_data'] + '.txt'
         data_label1 =  params['label1'] + '.txt'
         data_label2 =  params['label2'] + '.txt'
 
@@ -160,6 +161,6 @@ def print_info(name, params):
     """
     print ("{} initialized for split: {}, with bs: {}, im_shape: {}.".format(
         name,
-        params['split'],
+        params['raw_data'],
         params['batch_size'],
         params['im_shape']))
