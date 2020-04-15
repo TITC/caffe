@@ -34,7 +34,7 @@ class CaffeMultiLabel(caffe.Layer):
         params = eval(self.param_str)
 
         # Check the parameters for validity.
-        check_params(params)
+        # check_params(params)
 
         # store input as class variables
         self.batch_size = params['batch_size']
