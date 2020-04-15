@@ -101,11 +101,11 @@ class BatchLoader(object):
         self.indexlist_train = [line.rstrip('\n') for line in open(
             osp.join(self.data_root, '', data_train))]
 
-        self.indexlist_label1 = [line.rstrip('\n') for line in open(
-            osp.join(self.data_root, '', data_label1))]
+        # self.indexlist_label1 = [line.rstrip('\n') for line in open(
+        #     osp.join(self.data_root, '', data_label1))]
 
-        self.indexlist_label2 = [line.rstrip('\n') for line in open(
-            osp.join(self.data_root, '', data_label2))]
+        # self.indexlist_label2 = [line.rstrip('\n') for line in open(
+        #     osp.join(self.data_root, '', data_label2))]
 
         self._cur = 0  # current image
 
@@ -125,7 +125,7 @@ class BatchLoader(object):
         index = self.indexlist_train[self._cur]  # Get the image index
         image_file_name = index + '.png'
         im = np.asarray(Image.open(
-            osp.join(self.data_root, 'Raw200', image_file_name)))
+            osp.join(self.data_root, 'Raw200', 'Raw200'+image_file_name)))
         
         #im = scipy.misc.imresize(im, self.im_shape)  # resize
         im = np.array(Image.fromarray(im).resize(self.im_shape))
@@ -135,9 +135,9 @@ class BatchLoader(object):
 
         # Load and prepare ground truth
         im_label1 = np.asarray(Image.open(
-            osp.join(self.data_root, 'Soma200Lab', image_file_name)))
+            osp.join(self.data_root, 'Soma200Lab', 'Soma200Lab'+image_file_name)))
         im_label2 = np.asarray(Image.open(
-            osp.join(self.data_root, 'Vessel200Lab', image_file_name)))
+            osp.join(self.data_root, 'Vessel200Lab','Vessel200Lab'+ image_file_name)))
 
         self._cur += 1
         return im, im_label1,im_label2
