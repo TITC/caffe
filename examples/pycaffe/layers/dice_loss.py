@@ -39,6 +39,6 @@ class Dice_Loss(caffe.Layer):
         elif propagate_down[0]:
             numerator =  2.*np.power(self.gt,2)
             denominator = np.power((np.power(self.pd, 1)+np.power(self.gt,1)),2)
-            derivative = numerator/(denominator)/bottom[0].num
+            derivative = (numerator+1e-9)/(denominator+1e-9)/bottom[0].num
             # print(derivative.shape, bottom[0].num)
-            bottom[0].diff[...] = derivative
+            bottom[0].diff[...] = -derivative

@@ -128,37 +128,38 @@ class BatchLoader(object):
         index = self.indexlist_train[self._cur]  # Get the image index
         image_file_name = index + '.png'
         im = np.asarray(Image.open(
-            osp.join(self.data_root, 'Raw200', 'Raw200'+image_file_name)))
+            osp.join(self.data_root, 'train_data', image_file_name)))
         # im=im/255
         # print(osp.join(self.data_root, 'Raw200', 'Raw200'+image_file_name))
         #im = scipy.misc.imresize(im, self.im_shape)  # resize
         im = np.array(Image.fromarray(im).resize(self.im_shape))
-
+        im =im[:,:,0]
         # do a simple horizontal flip as data augmentation
         flip = np.random.choice(2)*2-1#-1/1
-        im = im[:, ::flip, :]
+        im = im[:, ::flip]
         if(np.amax(im)>1):
           im=im/255
         # print("im",np.amax(im))
         # Load and prepare ground truth
         im_label1 = np.asarray(Image.open(
-            osp.join(self.data_root, 'Soma200Lab', 'Soma200Lab'+image_file_name)))
+            osp.join(self.data_root, 'train_label1', image_file_name)))
         im_label1 = np.array(Image.fromarray(im_label1).resize(self.im_shape))    
-        im_label1 = im_label1[:, ::flip, :]
+        im_label1 = im_label1[:, ::flip]
         if(np.max(im_label1) > 1):
           im_label1 = im_label1 / 255
           im_label1[im_label1 > 0.5] = 1
           im_label1[im_label1 <= 0.5] = 0
         # print("im_label1",np.amax(im_label1))
         im_label2 = np.asarray(Image.open(
-            osp.join(self.data_root, 'Vessel200Lab','Vessel200Lab'+ image_file_name)))
+            osp.join(self.data_root, 'train_label2', image_file_name)))
         im_label2 = np.array(Image.fromarray(im_label2).resize(self.im_shape))  
-        im_label2 = im_label2[:, ::flip, :]
+        im_label2 = im_label2[:, ::flip]
         if(np.max(im_label2) > 1):
           im_label2 = im_label2 / 255
           im_label2[im_label2 > 0.5] = 1
           im_label2[im_label2 <= 0.5] = 0 
-        # print("im_label2",np.amax(im_label2))
+
+        # print(im.shape,im_label1.shape,im_label2.shape)
         self._cur += 1
         return im, im_label1,im_label2
 
