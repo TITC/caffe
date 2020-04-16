@@ -135,8 +135,8 @@ class BatchLoader(object):
         im = np.array(Image.fromarray(im).resize(self.im_shape))
 
         # do a simple horizontal flip as data augmentation
-        # flip = np.random.choice(2)*2-1#-1/1
-        # im = im[:, ::flip, :]
+        flip = np.random.choice(2)*2-1#-1/1
+        im = im[:, ::flip, :]
         if(np.amax(im)>1):
           im=im/255
         # print("im",np.amax(im))
@@ -144,7 +144,7 @@ class BatchLoader(object):
         im_label1 = np.asarray(Image.open(
             osp.join(self.data_root, 'Soma200Lab', 'Soma200Lab'+image_file_name)))
         im_label1 = np.array(Image.fromarray(im_label1).resize(self.im_shape))    
-        
+        im_label1 = im_label1[:, ::flip, :]
         if(np.max(im_label1) > 1):
           im_label1 = im_label1 / 255
           im_label1[im_label1 > 0.5] = 1
@@ -153,6 +153,7 @@ class BatchLoader(object):
         im_label2 = np.asarray(Image.open(
             osp.join(self.data_root, 'Vessel200Lab','Vessel200Lab'+ image_file_name)))
         im_label2 = np.array(Image.fromarray(im_label2).resize(self.im_shape))  
+        im_label2 = im_label2[:, ::flip, :]
         if(np.max(im_label2) > 1):
           im_label2 = im_label2 / 255
           im_label2[im_label2 > 0.5] = 1
